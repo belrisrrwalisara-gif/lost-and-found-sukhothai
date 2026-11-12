@@ -1,0 +1,985 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบแจ้งของหายและของที่พบ</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f1f5fb;
+  margin: 0;
+  padding: 20px;
+  color: #26344a;
+}
+
+.container { max-width: 750px; margin: auto; }
+
+header {
+  background: #2456a6;
+  color: white;
+  text-align: center;
+  padding: 25px 15px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+}
+
+header h1 { margin: 0 0 10px; font-size: 25px; }
+header p { margin: 0; }
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+}
+
+h2 { color: #2456a6; margin-top: 0; }
+
+label {
+  display: block;
+  margin-top: 13px;
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccd5e2;
+  border-radius: 8px;
+  font-size: 16px;
+  background: white;
+}
+
+textarea { min-height: 85px; resize: vertical; }
+
+button {
+  background: #2456a6;
+  color: white;
+  border: none;
+  padding: 12px 15px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+button:hover { background: #183f80; }
+
+.main-button { width: 100%; padding: 13px; font-size: 16px; }
+
+.status { padding: 10px; border-radius: 8px; display: none; }
+.success { display: block; color: #176b36; background: #e4f7e9; }
+.error { display: block; color: #a12626; background: #fde8e8; }
+
+.item {
+  border: 1px solid #dce4ef;
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 13px;
+  background: #fff;
+}
+
+.tag {
+  display: inline-block;
+  background: #e5efff;
+  color: #2456a6;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  margin-left: 5px;
+}
+
+.item-image {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-top: 12px;
+}
+
+.search { margin-bottom: 10px; }
+.note { color: #68758a; font-size: 13px; }
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
+  margin: 8px 0;
+}
+
+.status-waiting { background: #fff0d6; color: #9a6100; }
+.status-done { background: #ddf5e4; color: #176b36; }
+.status-missing { background: #fde3e3; color: #a12626; }
+
+.status-select { margin-top: 8px; }
+.filter-row { margin-bottom: 15px; }
+.filter-row label { margin-top: 12px; }
+.filter-row select { margin-bottom: 5px; }
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #dce4ef;
+}
+
+.stat-card p {
+  margin: 0 0 8px;
+  color: #68758a;
+  font-size: 14px;
+}
+
+.stat-card h3 { font-size: 28px; margin: 0; }
+.blue { color: #2456a6; }
+.red { color: #dc5555; }
+.orange { color: #d18a16; }
+.green { color: #198754; }
+
+.chart-row { margin-top: 16px; }
+
+.chart-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.chart-bar {
+  width: 100%;
+  height: 12px;
+  background: #e8edf5;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.chart-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 20px;
+  transition: width 0.3s;
+}
+
+.chart-lost { background: #dc5555; }
+.chart-found { background: #d18a16; }
+.chart-done { background: #198754; }
+
+.result-count {
+  color: #68758a;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.action-buttons button {
+  flex: 1;
+  min-width: 90px;
+  margin-top: 0;
+}
+
+.detail-button { background: #2456a6; }
+.edit-button { background: #d18a16; }
+.delete-button { background: #c94343; }
+
+.detail-button:hover { background: #183f80; }
+.edit-button:hover { background: #a66b0d; }
+.delete-button:hover { background: #a52e2e; }
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modal-content {
+  background: white;
+  max-width: 500px;
+  margin: 35px auto;
+  padding: 22px;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+
+.modal-content h2 { margin-bottom: 15px; }
+
+.modal-image {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 10px;
+  margin: 10px 0;
+  background: #f1f5fb;
+}
+
+.close-button {
+  background: #68758a;
+  width: 100%;
+}
+
+.call-button {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+  background: #198754;
+  color: white;
+  padding: 13px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 15px;
+}
+
+.call-button:hover { background: #146c43; }
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-actions button { flex: 1; }
+
+.confirm-delete-content {
+  max-width: 400px;
+  margin: 100px auto;
+  text-align: center;
+}
+
+.confirm-delete-content h2 { color: #c94343; }
+.confirm-delete-content p { color: #68758a; line-height: 1.6; }
+
+.confirm-delete-button { background: #c94343; }
+.confirm-delete-button:hover { background: #a52e2e; }
+.cancel-delete-button { background: #68758a; }
+.cancel-delete-button:hover { background: #4c596d; }
+
+@media (max-width: 400px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+  body { padding: 12px; }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+  <h1>ระบบแจ้งของหายและของที่พบ</h1>
+  <p>วิทยาลัยอาชีวศึกษาสุโขทัย</p>
+</header>
+
+<section class="card">
+  <h2>Dashboard สรุปภาพรวม</h2>
+  <p class="note">ข้อมูลสรุปรายการแจ้งของหายและของที่พบ</p>
+
+  <div class="dashboard-grid">
+    <div class="stat-card">
+      <p>รายการทั้งหมด</p>
+      <h3 class="blue" id="totalCount">0</h3>
+    </div>
+    <div class="stat-card">
+      <p>แจ้งของหาย</p>
+      <h3 class="red" id="lostCount">0</h3>
+    </div>
+    <div class="stat-card">
+      <p>พบสิ่งของ</p>
+      <h3 class="orange" id="foundCount">0</h3>
+    </div>
+    <div class="stat-card">
+      <p>ได้รับคืนแล้ว</p>
+      <h3 class="green" id="returnedCount">0</h3>
+    </div>
+  </div>
+
+  <h3 style="margin-top:25px;">สถิติรายการ</h3>
+
+  <div class="chart-row">
+    <div class="chart-label">
+      <span>แจ้งของหาย</span>
+      <span id="lostPercent">0%</span>
+    </div>
+    <div class="chart-bar">
+      <div id="lostBar" class="chart-fill chart-lost"></div>
+    </div>
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-label">
+      <span>พบสิ่งของ</span>
+      <span id="foundPercent">0%</span>
+    </div>
+    <div class="chart-bar">
+      <div id="foundBar" class="chart-fill chart-found"></div>
+    </div>
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-label">
+      <span>ได้รับคืนแล้ว</span>
+      <span id="returnedPercent">0%</span>
+    </div>
+    <div class="chart-bar">
+      <div id="returnedBar" class="chart-fill chart-done"></div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>แจ้งรายการสิ่งของ</h2>
+
+  <label>ประเภทการแจ้ง</label>
+  <select id="type">
+    <option value="แจ้งของหาย">แจ้งของหาย</option>
+    <option value="แจ้งพบของ">แจ้งพบของ</option>
+  </select>
+
+  <label>ชื่อสิ่งของ</label>
+  <input id="itemName" type="text" placeholder="เช่น กระเป๋าสตางค์">
+
+  <label>สถานที่</label>
+  <input id="location" type="text" placeholder="เช่น อาคาร 2 ห้อง 301">
+
+  <label>วันที่พบหรือวันที่หาย</label>
+  <input id="date" type="date">
+
+  <label>รายละเอียดเพิ่มเติม</label>
+  <textarea id="detail" placeholder="ระบุสี ลักษณะ หรือรายละเอียดอื่น ๆ"></textarea>
+
+  <label>ชื่อผู้แจ้ง</label>
+  <input id="contactName" type="text" placeholder="กรอกชื่อและนามสกุล">
+
+  <label>เบอร์โทรศัพท์ติดต่อ</label>
+  <input id="contactPhone" type="tel" inputmode="tel"
+    placeholder="เช่น 0812345678">
+
+  <p class="note">ข้อมูลติดต่อจะแสดงเมื่อเปิดดูรายละเอียดรายการเท่านั้น</p>
+
+  <label>รูปภาพสิ่งของ</label>
+  <input id="itemImage" type="file" accept="image/jpeg,image/png,image/webp">
+
+  <p class="note">เลือกรูปภาพ JPG, PNG หรือ WebP เพื่อประกอบรายการ</p>
+
+  <button class="main-button" onclick="addItem()">ส่งข้อมูลแจ้งรายการ</button>
+  <p id="statusMessage" class="status" role="status"></p>
+</section>
+
+<section class="card">
+  <h2>รายการแจ้งของหายและของที่พบ</h2>
+
+  <label>ค้นหารายการ</label>
+  <input class="search" id="search" type="text"
+    placeholder="ค้นหาชื่อสิ่งของ สถานที่ หรือชื่อผู้แจ้ง..."
+    oninput="showItems()">
+
+  <div class="filter-row">
+    <label>กรองตามประเภท</label>
+    <select id="typeFilter" onchange="showItems()">
+      <option value="ทั้งหมด">ทั้งหมด</option>
+      <option value="แจ้งของหาย">แจ้งของหาย</option>
+      <option value="แจ้งพบของ">แจ้งพบของ</option>
+    </select>
+
+    <label>กรองตามสถานะ</label>
+    <select id="statusFilter" onchange="showItems()">
+      <option value="ทั้งหมด">ทุกสถานะ</option>
+      <option value="ยังไม่พบสิ่งของ">ยังไม่พบสิ่งของ</option>
+      <option value="รอเจ้าของติดต่อ">รอเจ้าของติดต่อ</option>
+      <option value="ได้รับคืนแล้ว">ได้รับคืนแล้ว</option>
+    </select>
+  </div>
+
+  <p id="resultCount" class="result-count"></p>
+  <div id="itemList"></div>
+</section>
+
+</div>
+
+<div class="modal" id="detailModal">
+  <div class="modal-content">
+    <h2>รายละเอียดรายการ</h2>
+    <div id="detailContent"></div>
+    <button class="close-button" onclick="closeModal('detailModal')">ปิดหน้าต่าง</button>
+  </div>
+</div>
+
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <h2>แก้ไขรายการ</h2>
+
+    <input type="hidden" id="editId">
+
+    <label>ประเภทการแจ้ง</label>
+    <select id="editType">
+      <option value="แจ้งของหาย">แจ้งของหาย</option>
+      <option value="แจ้งพบของ">แจ้งพบของ</option>
+    </select>
+
+    <label>ชื่อสิ่งของ</label>
+    <input id="editName" type="text">
+
+    <label>สถานที่</label>
+    <input id="editLocation" type="text">
+
+    <label>วันที่พบหรือวันที่หาย</label>
+    <input id="editDate" type="date">
+
+    <label>รายละเอียดเพิ่มเติม</label>
+    <textarea id="editDetail"></textarea>
+
+    <label>ชื่อผู้แจ้ง</label>
+    <input id="editContactName" type="text" placeholder="ชื่อและนามสกุล">
+
+    <label>เบอร์โทรศัพท์ติดต่อ</label>
+    <input id="editContactPhone" type="tel" inputmode="tel"
+      placeholder="เช่น 0812345678">
+
+    <label>เปลี่ยนรูปภาพ (ถ้าต้องการ)</label>
+    <input id="editImage" type="file" accept="image/jpeg,image/png,image/webp">
+
+    <p class="note">หากไม่เลือกรูปใหม่ ระบบจะใช้รูปภาพเดิม</p>
+
+    <div class="modal-actions">
+      <button onclick="saveEdit()">บันทึกการแก้ไข</button>
+      <button class="close-button" onclick="closeModal('editModal')">ยกเลิก</button>
+    </div>
+
+    <p id="editMessage" class="status"></p>
+  </div>
+</div>
+
+<div class="modal" id="deleteModal">
+  <div class="modal-content confirm-delete-content">
+    <h2>ยืนยันการลบรายการ</h2>
+    <p>คุณต้องการลบรายการนี้ใช่ไหม?</p>
+    <p>เมื่อลบแล้ว รายการนี้จะถูกนำออกจากระบบ</p>
+
+    <div class="modal-actions">
+      <button class="confirm-delete-button" onclick="confirmDelete()">
+        ยืนยันการลบ
+      </button>
+      <button class="cancel-delete-button" onclick="cancelDelete()">
+        ยกเลิก
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function loadItems() {
+  try {
+    const data = JSON.parse(localStorage.getItem("lostItems"));
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+let items = loadItems();
+let pendingDeleteId = null;
+
+const allStatuses = [
+  "ยังไม่พบสิ่งของ",
+  "รอเจ้าของติดต่อ",
+  "ได้รับคืนแล้ว"
+];
+
+function setMessage(message, type) {
+  const box = document.getElementById("statusMessage");
+  box.textContent = message;
+  box.className = "status " + type;
+}
+
+function validPhone(phone) {
+  const cleaned = phone.replace(/[\s-]/g, "");
+  return /^0[0-9]{8,9}$/.test(cleaned);
+}
+
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+      const image = new Image();
+
+      image.onload = function() {
+        const maxSize = 800;
+        let width = image.width;
+        let height = image.height;
+
+        if (width > height && width > maxSize) {
+          height = height * maxSize / width;
+          width = maxSize;
+        } else if (height > maxSize) {
+          width = width * maxSize / height;
+          height = maxSize;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, width, height);
+
+        resolve(canvas.toDataURL("image/jpeg", 0.7));
+      };
+
+      image.onerror = () => reject(new Error("อ่านรูปภาพไม่ได้"));
+      image.src = event.target.result;
+    };
+
+    reader.onerror = () => reject(new Error("อ่านไฟล์ไม่ได้"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function saveItems() {
+  localStorage.setItem("lostItems", JSON.stringify(items));
+}
+
+async function addItem() {
+  const type = document.getElementById("type").value;
+  const name = document.getElementById("itemName").value.trim();
+  const location = document.getElementById("location").value.trim();
+  const date = document.getElementById("date").value;
+  const detail = document.getElementById("detail").value.trim();
+  const contactName = document.getElementById("contactName").value.trim();
+  const contactPhone = document.getElementById("contactPhone").value.trim();
+  const imageFile = document.getElementById("itemImage").files[0];
+
+  if (!name || !location || !date || !contactName || !contactPhone) {
+    setMessage("กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง", "error");
+    return;
+  }
+
+  if (!validPhone(contactPhone)) {
+    setMessage("กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง 9-10 หลัก", "error");
+    return;
+  }
+
+  try {
+    setMessage("กำลังบันทึกข้อมูล...", "success");
+
+    let imageData = null;
+
+    if (imageFile) {
+      if (!imageFile.type.startsWith("image/")) {
+        setMessage("กรุณาเลือกไฟล์รูปภาพเท่านั้น", "error");
+        return;
+      }
+      imageData = await compressImage(imageFile);
+    }
+
+    const newItem = {
+      id: Date.now(),
+      type,
+      name,
+      location,
+      date,
+      detail,
+      contactName,
+      contactPhone,
+      image: imageData,
+      status: type === "แจ้งพบของ"
+        ? "รอเจ้าของติดต่อ"
+        : "ยังไม่พบสิ่งของ"
+    };
+
+    items = [newItem, ...items];
+    saveItems();
+    showItems();
+
+    document.getElementById("itemName").value = "";
+    document.getElementById("location").value = "";
+    document.getElementById("date").value = "";
+    document.getElementById("detail").value = "";
+    document.getElementById("contactName").value = "";
+    document.getElementById("contactPhone").value = "";
+    document.getElementById("itemImage").value = "";
+
+    setMessage("✓ บันทึกรายการเรียบร้อยแล้ว", "success");
+
+  } catch (error) {
+    items = loadItems();
+    setMessage("บันทึกไม่สำเร็จ กรุณาลองเลือกรูปภาพขนาดเล็กลง", "error");
+  }
+}
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, function(char) {
+    return {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    }[char];
+  });
+}
+
+function updateDashboard() {
+  const total = items.length;
+  const lost = items.filter(item => item.type === "แจ้งของหาย").length;
+  const found = items.filter(item => item.type === "แจ้งพบของ").length;
+  const returned = items.filter(item => item.status === "ได้รับคืนแล้ว").length;
+
+  document.getElementById("totalCount").textContent = total;
+  document.getElementById("lostCount").textContent = lost;
+  document.getElementById("foundCount").textContent = found;
+  document.getElementById("returnedCount").textContent = returned;
+
+  const lostPercent = total ? (lost / total) * 100 : 0;
+  const foundPercent = total ? (found / total) * 100 : 0;
+  const returnedPercent = total ? (returned / total) * 100 : 0;
+
+  document.getElementById("lostPercent").textContent = Math.round(lostPercent) + "%";
+  document.getElementById("foundPercent").textContent = Math.round(foundPercent) + "%";
+  document.getElementById("returnedPercent").textContent = Math.round(returnedPercent) + "%";
+
+  document.getElementById("lostBar").style.width = lostPercent + "%";
+  document.getElementById("foundBar").style.width = foundPercent + "%";
+  document.getElementById("returnedBar").style.width = returnedPercent + "%";
+}
+
+function showItems() {
+  updateDashboard();
+
+  const list = document.getElementById("itemList");
+  const keyword = document.getElementById("search").value.toLowerCase().trim();
+  const typeFilter = document.getElementById("typeFilter").value;
+  const statusFilter = document.getElementById("statusFilter").value;
+
+  const filtered = items.filter(item => {
+    const name = (item.name || "").toLowerCase();
+    const location = (item.location || "").toLowerCase();
+    const contactName = (item.contactName || "").toLowerCase();
+
+    const currentStatus = item.status ||
+      (item.type === "แจ้งพบของ" ? "รอเจ้าของติดต่อ" : "ยังไม่พบสิ่งของ");
+
+    return (
+      (name.includes(keyword) ||
+       location.includes(keyword) ||
+       contactName.includes(keyword)) &&
+      (typeFilter === "ทั้งหมด" || item.type === typeFilter) &&
+      (statusFilter === "ทั้งหมด" || currentStatus === statusFilter)
+    );
+  });
+
+  document.getElementById("resultCount").textContent =
+    "พบทั้งหมด " + filtered.length + " รายการ";
+
+  if (filtered.length === 0) {
+    list.innerHTML = "<p>ไม่พบรายการที่ตรงกับการค้นหา</p>";
+    return;
+  }
+
+  list.innerHTML = filtered.map(item => {
+    const status = item.status ||
+      (item.type === "แจ้งพบของ" ? "รอเจ้าของติดต่อ" : "ยังไม่พบสิ่งของ");
+
+    let statusClass = "status-waiting";
+
+    if (status === "ได้รับคืนแล้ว") statusClass = "status-done";
+    else if (status === "ยังไม่พบสิ่งของ") statusClass = "status-missing";
+
+    return `
+      <div class="item">
+        <strong>${escapeHTML(item.name)}</strong>
+        <span class="tag">${escapeHTML(item.type)}</span>
+
+        <p>
+          <span class="status-badge ${statusClass}">
+            ${escapeHTML(status)}
+          </span>
+        </p>
+
+        ${item.image
+          ? `<img class="item-image" src="${item.image}" alt="รูปสิ่งของ">`
+          : ""
+        }
+
+        <p>สถานที่: ${escapeHTML(item.location)}</p>
+        <p>วันที่: ${escapeHTML(item.date)}</p>
+
+        <label>เปลี่ยนสถานะรายการ</label>
+        <select class="status-select"
+          onchange="updateStatus('${String(item.id)}', this.value)">
+          ${allStatuses.map(option => `
+            <option value="${option}" ${status === option ? "selected" : ""}>
+              ${option}
+            </option>
+          `).join("")}
+        </select>
+
+        <div class="action-buttons">
+          <button class="detail-button"
+            onclick="openDetail('${String(item.id)}')">
+            ดูรายละเอียด
+          </button>
+
+          <button class="edit-button"
+            onclick="openEdit('${String(item.id)}')">
+            แก้ไข
+          </button>
+
+          <button class="delete-button"
+            onclick="openDeleteModal('${String(item.id)}')">
+            ลบรายการ
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function updateStatus(id, newStatus) {
+  const item = items.find(item => String(item.id) === String(id));
+  if (!item) return;
+
+  const oldStatus = item.status;
+  item.status = newStatus;
+
+  try {
+    saveItems();
+    showItems();
+    setMessage("✓ เปลี่ยนสถานะเรียบร้อยแล้ว", "success");
+  } catch (error) {
+    item.status = oldStatus;
+    setMessage("ไม่สามารถบันทึกสถานะได้ กรุณาลองใหม่", "error");
+    showItems();
+  }
+}
+
+// ดูรายละเอียด พร้อมปุ่มโทรติดต่อ
+function openDetail(id) {
+  const item = items.find(item => String(item.id) === String(id));
+  if (!item) return;
+
+  const status = item.status ||
+    (item.type === "แจ้งพบของ" ? "รอเจ้าของติดต่อ" : "ยังไม่พบสิ่งของ");
+
+  // ใช้เฉพาะตัวเลข และตรวจสอบรูปแบบเบอร์ก่อนสร้างปุ่ม
+  const phone = String(item.contactPhone || "").replace(/[^0-9]/g, "");
+  const canCall = /^0[0-9]{8,9}$/.test(phone);
+
+  document.getElementById("detailContent").innerHTML = `
+    <p><strong>ชื่อสิ่งของ:</strong> ${escapeHTML(item.name)}</p>
+    <p><strong>ประเภท:</strong> ${escapeHTML(item.type)}</p>
+    <p><strong>สถานะ:</strong> ${escapeHTML(status)}</p>
+
+    ${item.image
+      ? `<img class="modal-image" src="${item.image}" alt="รูปสิ่งของ">`
+      : "<p class='note'>ไม่มีรูปภาพประกอบ</p>"
+    }
+
+    <p><strong>สถานที่:</strong> ${escapeHTML(item.location)}</p>
+    <p><strong>วันที่:</strong> ${escapeHTML(item.date)}</p>
+    <p><strong>รายละเอียดเพิ่มเติม:</strong></p>
+    <p>${escapeHTML(item.detail || "-")}</p>
+
+    <hr>
+    <h3 style="color:#2456a6;">ข้อมูลติดต่อผู้แจ้ง</h3>
+    <p><strong>ชื่อผู้แจ้ง:</strong> ${escapeHTML(item.contactName || "-")}</p>
+    <p><strong>เบอร์โทรศัพท์:</strong> ${escapeHTML(item.contactPhone || "-")}</p>
+
+    ${canCall
+      ? `<a class="call-button" href="tel:${phone}">
+          ☎ โทรติดต่อผู้แจ้ง
+        </a>`
+      : "<p class='note'>ไม่มีเบอร์โทรศัพท์ที่สามารถติดต่อได้</p>"
+    }
+  `;
+
+  document.getElementById("detailModal").style.display = "block";
+}
+
+function openEdit(id) {
+  const item = items.find(item => String(item.id) === String(id));
+  if (!item) return;
+
+  document.getElementById("editId").value = item.id;
+  document.getElementById("editType").value = item.type;
+  document.getElementById("editName").value = item.name || "";
+  document.getElementById("editLocation").value = item.location || "";
+  document.getElementById("editDate").value = item.date || "";
+  document.getElementById("editDetail").value = item.detail || "";
+  document.getElementById("editContactName").value = item.contactName || "";
+  document.getElementById("editContactPhone").value = item.contactPhone || "";
+  document.getElementById("editImage").value = "";
+  document.getElementById("editMessage").className = "status";
+  document.getElementById("editModal").style.display = "block";
+}
+
+async function saveEdit() {
+  const id = document.getElementById("editId").value;
+  const item = items.find(item => String(item.id) === String(id));
+  if (!item) return;
+
+  const type = document.getElementById("editType").value;
+  const name = document.getElementById("editName").value.trim();
+  const location = document.getElementById("editLocation").value.trim();
+  const date = document.getElementById("editDate").value;
+  const detail = document.getElementById("editDetail").value.trim();
+  const contactName = document.getElementById("editContactName").value.trim();
+  const contactPhone = document.getElementById("editContactPhone").value.trim();
+  const imageFile = document.getElementById("editImage").files[0];
+  const message = document.getElementById("editMessage");
+
+  if (!name || !location || !date || !contactName || !contactPhone) {
+    message.textContent = "กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง";
+    message.className = "status error";
+    return;
+  }
+
+  if (!validPhone(contactPhone)) {
+    message.textContent = "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง 9-10 หลัก";
+    message.className = "status error";
+    return;
+  }
+
+  try {
+    message.textContent = "กำลังบันทึกการแก้ไข...";
+    message.className = "status success";
+
+    let imageData = item.image || null;
+
+    if (imageFile) {
+      if (!imageFile.type.startsWith("image/")) {
+        message.textContent = "กรุณาเลือกไฟล์รูปภาพเท่านั้น";
+        message.className = "status error";
+        return;
+      }
+      imageData = await compressImage(imageFile);
+    }
+
+    const oldItem = { ...item };
+
+    item.type = type;
+    item.name = name;
+    item.location = location;
+    item.date = date;
+    item.detail = detail;
+    item.contactName = contactName;
+    item.contactPhone = contactPhone;
+    item.image = imageData;
+
+    if (type === "แจ้งพบของ" && item.status === "ยังไม่พบสิ่งของ") {
+      item.status = "รอเจ้าของติดต่อ";
+    } else if (type === "แจ้งของหาย" && item.status === "รอเจ้าของติดต่อ") {
+      item.status = "ยังไม่พบสิ่งของ";
+    }
+
+    try {
+      saveItems();
+    } catch (saveError) {
+      Object.assign(item, oldItem);
+      throw saveError;
+    }
+
+    showItems();
+    closeModal("editModal");
+    setMessage("✓ แก้ไขรายการเรียบร้อยแล้ว", "success");
+
+  } catch (error) {
+    message.textContent = "บันทึกการแก้ไขไม่สำเร็จ กรุณาลองใหม่";
+    message.className = "status error";
+  }
+}
+
+function openDeleteModal(id) {
+  const item = items.find(item => String(item.id) === String(id));
+  if (!item) return;
+
+  pendingDeleteId = id;
+  document.getElementById("deleteModal").style.display = "block";
+}
+
+function cancelDelete() {
+  pendingDeleteId = null;
+  document.getElementById("deleteModal").style.display = "none";
+}
+
+function confirmDelete() {
+  if (pendingDeleteId === null) return;
+
+  const oldItems = [...items];
+  const idToDelete = pendingDeleteId;
+
+  const updatedItems = items.filter(
+    item => String(item.id) !== String(idToDelete)
+  );
+
+  if (updatedItems.length === items.length) {
+    cancelDelete();
+    setMessage("ไม่พบรายการที่ต้องการลบ", "error");
+    return;
+  }
+
+  try {
+    localStorage.setItem("lostItems", JSON.stringify(updatedItems));
+
+    items = loadItems();
+    pendingDeleteId = null;
+
+    document.getElementById("deleteModal").style.display = "none";
+
+    showItems();
+    setMessage("✓ ลบรายการเรียบร้อยแล้ว", "success");
+
+  } catch (error) {
+    items = oldItems;
+    pendingDeleteId = null;
+
+    document.getElementById("deleteModal").style.display = "none";
+
+    showItems();
+    setMessage("ลบรายการไม่สำเร็จ กรุณาลองใหม่", "error");
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = "none";
+}
+
+window.onclick = function(event) {
+  if (event.target.classList.contains("modal")) {
+    if (event.target.id === "deleteModal") {
+      cancelDelete();
+    } else {
+      event.target.style.display = "none";
+    }
+  }
+};
+
+showItems();
+</script>
+</body>
+</html>
